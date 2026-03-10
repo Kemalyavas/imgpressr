@@ -1,12 +1,28 @@
+import imageCompression from 'browser-image-compression'
+
 export type ImageFormat = 'image/png' | 'image/jpeg' | 'image/webp'
 
 export type Preset = 'low' | 'medium' | 'high' | 'lossless'
 
 export const PRESET_CONFIG = {
-  low: { quality: 0.4, label: 'Low', estimate: '~80%' },
-  medium: { quality: 0.7, label: 'Medium', estimate: '~60%' },
-  high: { quality: 0.85, label: 'High', estimate: '~30%' },
-  lossless: { quality: 1.0, label: 'Lossless', estimate: '~5%' },
+  low: {
+    maxSizeMB: 0.3,
+    maxWidthOrHeight: 1280,
+    initialQuality: 0.5,
+    maxIteration: 15,
+  },
+  medium: {
+    maxSizeMB: 1,
+    maxWidthOrHeight: 1920,
+    initialQuality: 0.7,
+    maxIteration: 10,
+  },
+  high: {
+    maxSizeMB: 2,
+    maxWidthOrHeight: 2560,
+    initialQuality: 0.85,
+    maxIteration: 10,
+  },
 } as const
 
 export interface CompressResult {
@@ -56,35 +72,44 @@ export function getOriginalFormat(file: File): ImageFormat {
   return 'image/jpeg'
 }
 
-function canvasCompress(file: File, quality: number, format: ImageFormat): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
+async function hasAlphaChannel(file: File): Promise<boolean> {
+  if (file.type === 'image/jpeg') return false
 
+  return new Promise((resolve) => {
+    const img = new Image()
     img.onload = () => {
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
-      if (!ctx) { reject(new Error('Failed to get canvas context')); return }
+      if (!ctx) {
+        URL.revokeObjectURL(img.src)
+        resolve(false)
+        return
+      }
 
-      canvas.width = img.width
-      canvas.height = img.height
-      ctx.drawImage(img, 0, 0)
+      // Sample at reduced resolution for speed
+      const maxDim = 256
+      const ratio = Math.min(maxDim / img.width, maxDim / img.height, 1)
+      canvas.width = Math.round(img.width * ratio)
+      canvas.height = Math.round(img.height * ratio)
 
-      canvas.toBlob(
-        (blob) => {
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data
+
+      for (let i = 3; i < data.length; i += 4) {
+        if (data[i] < 250) {
           URL.revokeObjectURL(img.src)
-          blob ? resolve(blob) : reject(new Error('Failed to compress image'))
-        },
-        format,
-        quality
-      )
-    }
+          resolve(true)
+          return
+        }
+      }
 
+      URL.revokeObjectURL(img.src)
+      resolve(false)
+    }
     img.onerror = () => {
       URL.revokeObjectURL(img.src)
-      reject(new Error('Failed to load image'))
+      resolve(false)
     }
-
     img.src = URL.createObjectURL(file)
   })
 }
@@ -92,32 +117,61 @@ function canvasCompress(file: File, quality: number, format: ImageFormat): Promi
 export async function compressImage(
   file: File,
   preset: Preset,
-  requestedFormat: ImageFormat
+  requestedFormat: string
 ): Promise<CompressResult> {
   const inputFormat = getOriginalFormat(file)
+
+  // Resolve output format
+  let outputFormat: ImageFormat
+  if (requestedFormat === 'auto') {
+    // Auto: alpha → WebP (preserves transparency), no alpha → JPEG (best compression)
+    const hasAlpha = await hasAlphaChannel(file)
+    outputFormat = hasAlpha ? 'image/webp' : 'image/jpeg'
+  } else {
+    outputFormat = requestedFormat as ImageFormat
+    // Safety: if converting to JPEG from alpha-capable format, check for transparency
+    if (outputFormat === 'image/jpeg' && inputFormat !== 'image/jpeg') {
+      const hasAlpha = await hasAlphaChannel(file)
+      if (hasAlpha) {
+        outputFormat = 'image/webp'
+      }
+    }
+  }
+
+  // Lossless preset
+  if (preset === 'lossless') {
+    if (outputFormat === inputFormat) {
+      return { blob: file, format: inputFormat }
+    }
+    // Format conversion at max quality
+    const converted = await imageCompression(file, {
+      maxSizeMB: Number.POSITIVE_INFINITY,
+      useWebWorker: true,
+      fileType: outputFormat,
+      initialQuality: 1,
+      alwaysKeepResolution: true,
+    })
+    return { blob: converted, format: outputFormat }
+  }
+
   const config = PRESET_CONFIG[preset]
 
-  // Lossless: return original file unchanged
-  if (preset === 'lossless') {
-    return { blob: file, format: requestedFormat === 'image/png' ? inputFormat : requestedFormat }
-  }
+  const compressed = await imageCompression(file, {
+    maxSizeMB: config.maxSizeMB,
+    maxWidthOrHeight: config.maxWidthOrHeight,
+    initialQuality: config.initialQuality,
+    maxIteration: config.maxIteration,
+    useWebWorker: true,
+    fileType: outputFormat,
+    ...(preset === 'high' ? { alwaysKeepResolution: true } : {}),
+  })
 
-  // Determine actual output format
-  // PNG output can't be compressed by canvas — auto-convert to WebP (supports transparency)
-  let actualFormat = requestedFormat
-  if (actualFormat === 'image/png') {
-    actualFormat = 'image/webp'
-  }
-
-  // Compress with canvas
-  const blob = await canvasCompress(file, config.quality, actualFormat)
-
-  // Safety: if result is bigger than original, return original file
-  if (blob.size >= file.size) {
+  // Safety: if result is bigger, return original
+  if (compressed.size >= file.size) {
     return { blob: file, format: inputFormat }
   }
 
-  return { blob, format: actualFormat }
+  return { blob: compressed, format: outputFormat }
 }
 
 export function generateId(): string {

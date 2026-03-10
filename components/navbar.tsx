@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
@@ -12,7 +13,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { Sun, Moon, Menu, ImageDown } from "lucide-react"
+import { Sun, Moon, Menu } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const NAV_LINKS = [
@@ -50,9 +51,20 @@ export function Navbar() {
       <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground">
-              <ImageDown className="h-4 w-4 text-background" />
-            </div>
+            <Image
+              src="/logo-light.jpeg"
+              alt="ImgPressr"
+              width={32}
+              height={32}
+              className="h-8 w-8 rounded-lg dark:hidden"
+            />
+            <Image
+              src="/logo-dark.jpeg"
+              alt="ImgPressr"
+              width={32}
+              height={32}
+              className="hidden h-8 w-8 rounded-lg dark:block"
+            />
             <span className="text-base font-bold text-foreground">ImgPressr</span>
           </Link>
 

@@ -9,7 +9,6 @@ import { ImagePreview } from '@/components/image-preview'
 import { SettingsPanel } from '@/components/settings-panel'
 import {
   ProcessedImage,
-  ImageFormat,
   Preset,
   compressImage,
   generateId,
@@ -24,7 +23,7 @@ interface ImageCompressorProps {
   hideHeader?: boolean
 }
 
-export function ImageCompressor({ defaultFormat = 'same', hideHeader = false }: ImageCompressorProps) {
+export function ImageCompressor({ defaultFormat = 'auto', hideHeader = false }: ImageCompressorProps) {
   const [images, setImages] = useState<ProcessedImage[]>([])
   const [preset, setPreset] = useState<Preset>('medium')
   const [outputFormat, setOutputFormat] = useState<string>(defaultFormat)
@@ -65,11 +64,7 @@ export function ImageCompressor({ defaultFormat = 'same', hideHeader = false }: 
       )
 
       try {
-        const targetFormat: ImageFormat = outputFormat === 'same'
-          ? getOriginalFormat(image.originalFile)
-          : (outputFormat as ImageFormat)
-
-        const result = await compressImage(image.originalFile, preset, targetFormat)
+        const result = await compressImage(image.originalFile, preset, outputFormat)
         const compressedUrl = URL.createObjectURL(result.blob)
 
         setImages((prev) =>

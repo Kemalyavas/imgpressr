@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { Preset, PRESET_CONFIG } from '@/lib/image-processor'
+import { Preset } from '@/lib/image-processor'
 import { cn } from '@/lib/utils'
 
 interface SettingsPanelProps {
@@ -18,11 +18,11 @@ interface SettingsPanelProps {
   onFormatChange: (format: string) => void
 }
 
-const PRESETS: { key: Preset; label: string; estimate: string; description: string }[] = [
-  { key: 'low', label: 'Low', estimate: '~80%', description: 'Max compression' },
-  { key: 'medium', label: 'Medium', estimate: '~60%', description: 'Balanced' },
-  { key: 'high', label: 'High', estimate: '~30%', description: 'High quality' },
-  { key: 'lossless', label: 'Lossless', estimate: '~5%', description: 'No quality loss' },
+const PRESETS: { key: Preset; label: string; description: string }[] = [
+  { key: 'low', label: 'Low', description: 'Smallest file' },
+  { key: 'medium', label: 'Medium', description: 'Balanced' },
+  { key: 'high', label: 'High', description: 'Best quality' },
+  { key: 'lossless', label: 'Lossless', description: 'No quality loss' },
 ]
 
 export function SettingsPanel({
@@ -53,10 +53,10 @@ export function SettingsPanel({
               >
                 <span className="text-sm font-semibold">{p.label}</span>
                 <span className={cn(
-                  'text-xs font-mono',
+                  'text-xs',
                   preset === p.key ? 'text-background/70' : 'text-muted-foreground'
                 )}>
-                  {p.estimate} smaller
+                  {p.description}
                 </span>
               </button>
             ))}
@@ -71,7 +71,7 @@ export function SettingsPanel({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="same">Same as original</SelectItem>
+              <SelectItem value="auto">Auto (best compression)</SelectItem>
               <SelectItem value="image/jpeg">JPEG</SelectItem>
               <SelectItem value="image/png">PNG</SelectItem>
               <SelectItem value="image/webp">WebP</SelectItem>
