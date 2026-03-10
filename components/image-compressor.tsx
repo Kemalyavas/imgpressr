@@ -10,6 +10,7 @@ import { SettingsPanel } from '@/components/settings-panel'
 import {
   ProcessedImage,
   ImageFormat,
+  Preset,
   compressImage,
   generateId,
   getOriginalFormat,
@@ -25,7 +26,7 @@ interface ImageCompressorProps {
 
 export function ImageCompressor({ defaultFormat = 'same', hideHeader = false }: ImageCompressorProps) {
   const [images, setImages] = useState<ProcessedImage[]>([])
-  const [quality, setQuality] = useState(80)
+  const [preset, setPreset] = useState<Preset>('medium')
   const [outputFormat, setOutputFormat] = useState<string>(defaultFormat)
   const [isProcessing, setIsProcessing] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -40,12 +41,12 @@ export function ImageCompressor({ defaultFormat = 'same', hideHeader = false }: 
       compressedSize: 0,
       compressedUrl: null,
       outputFormat: getOriginalFormat(file),
-      quality,
+      preset,
       status: 'pending' as const,
     }))
 
     setImages((prev) => [...prev, ...newImages])
-  }, [quality])
+  }, [preset])
 
   const processImages = useCallback(async () => {
     const pendingImages = images.filter((img) => img.status === 'pending')
@@ -56,7 +57,7 @@ export function ImageCompressor({ defaultFormat = 'same', hideHeader = false }: 
 
     for (let i = 0; i < pendingImages.length; i++) {
       const image = pendingImages[i]
-      
+
       setImages((prev) =>
         prev.map((img) =>
           img.id === image.id ? { ...img, status: 'processing' as const } : img
@@ -68,24 +69,19 @@ export function ImageCompressor({ defaultFormat = 'same', hideHeader = false }: 
           ? getOriginalFormat(image.originalFile)
           : (outputFormat as ImageFormat)
 
-        const compressedBlob = await compressImage(
-          image.originalFile,
-          quality,
-          targetFormat
-        )
-
-        const compressedUrl = URL.createObjectURL(compressedBlob)
+        const result = await compressImage(image.originalFile, preset, targetFormat)
+        const compressedUrl = URL.createObjectURL(result.blob)
 
         setImages((prev) =>
           prev.map((img) =>
             img.id === image.id
               ? {
                   ...img,
-                  compressedBlob,
-                  compressedSize: compressedBlob.size,
+                  compressedBlob: result.blob,
+                  compressedSize: result.blob.size,
                   compressedUrl,
-                  outputFormat: targetFormat,
-                  quality,
+                  outputFormat: result.format,
+                  preset,
                   status: 'completed' as const,
                 }
               : img
@@ -110,7 +106,7 @@ export function ImageCompressor({ defaultFormat = 'same', hideHeader = false }: 
 
     setIsProcessing(false)
     setProgress(100)
-  }, [images, quality, outputFormat])
+  }, [images, preset, outputFormat])
 
   const handleRemove = useCallback((id: string) => {
     setImages((prev) => {
@@ -161,7 +157,6 @@ export function ImageCompressor({ defaultFormat = 'same', hideHeader = false }: 
       return
     }
 
-    // Dynamic import of JSZip
     const JSZip = (await import('jszip')).default
     const zip = new JSZip()
 
@@ -205,9 +200,9 @@ export function ImageCompressor({ defaultFormat = 'same', hideHeader = false }: 
         {/* Left Column - Settings */}
         <div className="lg:col-span-1">
           <SettingsPanel
-            quality={quality}
+            preset={preset}
             outputFormat={outputFormat}
-            onQualityChange={setQuality}
+            onPresetChange={setPreset}
             onFormatChange={setOutputFormat}
           />
         </div>
@@ -225,9 +220,9 @@ export function ImageCompressor({ defaultFormat = 'same', hideHeader = false }: 
                 </span>
                 {completedCount > 0 && (
                   <>
-                    <span className="text-muted-foreground">•</span>
+                    <span className="text-muted-foreground">&bull;</span>
                     <span className="font-mono text-muted-foreground">
-                      {formatBytes(totalOriginalSize)} → {formatBytes(totalCompressedSize)}
+                      {formatBytes(totalOriginalSize)} &rarr; {formatBytes(totalCompressedSize)}
                     </span>
                     <span className="rounded bg-success/20 px-2 py-0.5 text-xs font-mono font-medium text-success">
                       -{getCompressionPercentage(totalOriginalSize, totalCompressedSize)}%

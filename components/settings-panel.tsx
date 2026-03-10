@@ -1,6 +1,5 @@
 'use client'
 
-import { Slider } from '@/components/ui/slider'
 import {
   Select,
   SelectContent,
@@ -9,48 +8,61 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { ImageFormat } from '@/lib/image-processor'
+import { Preset, PRESET_CONFIG } from '@/lib/image-processor'
+import { cn } from '@/lib/utils'
 
 interface SettingsPanelProps {
-  quality: number
+  preset: Preset
   outputFormat: string
-  onQualityChange: (quality: number) => void
+  onPresetChange: (preset: Preset) => void
   onFormatChange: (format: string) => void
 }
 
+const PRESETS: { key: Preset; label: string; estimate: string; description: string }[] = [
+  { key: 'low', label: 'Low', estimate: '~80%', description: 'Max compression' },
+  { key: 'medium', label: 'Medium', estimate: '~60%', description: 'Balanced' },
+  { key: 'high', label: 'High', estimate: '~30%', description: 'High quality' },
+  { key: 'lossless', label: 'Lossless', estimate: '~5%', description: 'No quality loss' },
+]
+
 export function SettingsPanel({
-  quality,
+  preset,
   outputFormat,
-  onQualityChange,
+  onPresetChange,
   onFormatChange,
 }: SettingsPanelProps) {
   return (
     <div className="rounded-lg border border-border bg-card p-4 md:p-6">
       <h3 className="mb-4 text-sm font-medium text-foreground">Compression Settings</h3>
-      
+
       <div className="space-y-6">
-        {/* Quality Slider */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label className="text-sm text-muted-foreground">Quality</Label>
-            <span className="rounded bg-secondary px-2 py-0.5 text-sm font-mono font-medium text-foreground">
-              {quality}%
-            </span>
-          </div>
-          <Slider
-            value={[quality]}
-            onValueChange={([value]) => onQualityChange(value)}
-            min={1}
-            max={100}
-            step={1}
-            className="w-full"
-          />
-          <div className="flex justify-between text-xs text-muted-foreground font-mono">
-            <span>1%</span>
-            <span>100%</span>
+        {/* Quality Presets */}
+        <div className="space-y-2">
+          <Label className="text-sm text-muted-foreground">Quality</Label>
+          <div className="grid grid-cols-2 gap-2">
+            {PRESETS.map((p) => (
+              <button
+                key={p.key}
+                onClick={() => onPresetChange(p.key)}
+                className={cn(
+                  'flex flex-col items-center gap-0.5 rounded-lg border px-3 py-3 text-center transition-colors',
+                  preset === p.key
+                    ? 'border-foreground bg-foreground text-background'
+                    : 'border-border bg-secondary/50 text-foreground hover:border-foreground/30'
+                )}
+              >
+                <span className="text-sm font-semibold">{p.label}</span>
+                <span className={cn(
+                  'text-xs font-mono',
+                  preset === p.key ? 'text-background/70' : 'text-muted-foreground'
+                )}>
+                  {p.estimate} smaller
+                </span>
+              </button>
+            ))}
           </div>
         </div>
-        
+
         {/* Output Format */}
         <div className="space-y-2">
           <Label className="text-sm text-muted-foreground">Output Format</Label>
