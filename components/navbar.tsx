@@ -54,16 +54,16 @@ export function Navbar() {
             <Image
               src="/logo-light.jpeg"
               alt="ImgPressr"
-              width={32}
-              height={32}
-              className="h-8 w-8 rounded-lg dark:hidden"
+              width={48}
+              height={48}
+              className="h-12 w-12 rounded-lg dark:hidden"
             />
             <Image
               src="/logo-dark.jpeg"
               alt="ImgPressr"
-              width={32}
-              height={32}
-              className="hidden h-8 w-8 rounded-lg dark:block"
+              width={48}
+              height={48}
+              className="hidden h-12 w-12 rounded-lg dark:block"
             />
             <span className="text-base font-bold text-foreground">ImgPressr</span>
           </Link>
