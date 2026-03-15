@@ -123,7 +123,7 @@ export default function Home() {
             ].map((t) => (
               <Link
                 key={t.size}
-                href={`/compress-to-${t.size}`}
+                href={`/compress-to/${t.size}`}
                 className="group flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:border-foreground/20 hover:bg-muted/50"
               >
                 <span className="text-sm font-medium text-foreground">

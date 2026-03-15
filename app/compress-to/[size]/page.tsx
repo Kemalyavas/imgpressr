@@ -164,7 +164,7 @@ export async function generateMetadata({
   return {
     title: `Compress Image to ${config.label} Online Free | ImgPressr`,
     description: config.description,
-    alternates: { canonical: `/compress-to-${config.slug}` },
+    alternates: { canonical: `/compress-to/${config.slug}` },
   }
 }
 
@@ -250,7 +250,7 @@ export default async function CompressToSizePage({
             {otherSizes.map((s) => (
               <Link
                 key={s.slug}
-                href={`/compress-to-${s.slug}`}
+                href={`/compress-to/${s.slug}`}
                 className="group flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-secondary/50"
               >
                 <span className="text-sm font-medium text-foreground">
