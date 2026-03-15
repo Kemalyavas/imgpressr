@@ -100,6 +100,41 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Compress to Specific Size */}
+        <section className="mt-16 md:mt-24">
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">
+            Compress to Specific Size
+          </h2>
+          <p className="mt-2 text-muted-foreground">
+            Need your image under a specific file size? Choose your target below.
+          </p>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {[
+              { size: '10kb', label: '10 KB' },
+              { size: '20kb', label: '20 KB' },
+              { size: '50kb', label: '50 KB' },
+              { size: '100kb', label: '100 KB' },
+              { size: '200kb', label: '200 KB' },
+              { size: '500kb', label: '500 KB' },
+              { size: '1mb', label: '1 MB' },
+              { size: '2mb', label: '2 MB' },
+              { size: '5mb', label: '5 MB' },
+            ].map((t) => (
+              <Link
+                key={t.size}
+                href={`/compress-to-${t.size}`}
+                className="group flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:border-foreground/20 hover:bg-muted/50"
+              >
+                <span className="text-sm font-medium text-foreground">
+                  to {t.label}
+                </span>
+                <ArrowRight className="size-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            ))}
+          </div>
+        </section>
+
         {/* FAQ */}
         <section className="mt-16 md:mt-24">
           <h2 className="text-2xl font-bold tracking-tight text-foreground">
@@ -122,6 +157,15 @@ export default function Home() {
 
         {/* Footer */}
         <footer className="mt-16 border-t border-border pt-8 md:mt-24">
+          <div className="mb-5 pb-5 border-b border-border">
+            <p className="text-xs font-semibold text-foreground mb-2">More Free Tools</p>
+            <div className="flex flex-wrap gap-x-5 gap-y-1">
+              <a href="https://jsonshift.com" target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:text-foreground transition-colors">JSONShift — Convert JSON, CSV, YAML, XML</a>
+              <a href="https://thepercentcalc.com" target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:text-foreground transition-colors">PercentCalc — Percentage calculator</a>
+              <a href="https://caseformat.com" target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:text-foreground transition-colors">CaseFormat — Text case converter</a>
+              <a href="https://faviconator.com" target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Faviconator — Favicon generator</a>
+            </div>
+          </div>
           <div className="flex flex-col items-center justify-between gap-4 text-sm text-muted-foreground sm:flex-row">
             <p>&copy; {new Date().getFullYear()} ImgPressr. All rights reserved.</p>
             <div className="flex items-center gap-4">

@@ -47,6 +47,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.9,
     },
+    // Compress to specific size pages
+    ...['10kb', '20kb', '50kb', '100kb', '200kb', '500kb', '1mb', '2mb', '5mb'].map((size) => ({
+      url: `${SITE_URL}/compress-to-${size}`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    })),
     {
       url: `${SITE_URL}/blog`,
       lastModified: LAST_MODIFIED,
